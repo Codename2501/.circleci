@@ -1,9 +1,44 @@
 version: 2.1
-
 orbs:
-    hello: circleci/hello-build@0.0.7 # circleci/buildpack-deps Docker イメージを使います
-
+    hello: circleci/hello-build@0.0.5
 workflows:
     "Hello Workflow":
         jobs:
           - hello/hello-build
+          commands:
+  sayhello:
+    description: "デモ用のごく簡単なコマンドです"
+    parameters:
+      to:
+        type: string
+        default: "Hello World"
+    steps:
+      - run: echo << parameters.to >>
+      version: 2.1
+executors:
+  my-executor:
+    docker:
+      - image: circleci/ruby:2.5.1-node-browsers
+
+jobs:
+  my-job:
+    executor: my-executor
+    steps:
+      - run: echo Executor の“外”で定義しました
+      jobs:
+  build:
+    docker:
+      - image: buildpack-deps:trusty
+    environment:
+      FOO: bar
+    parallelism: 3
+    resource_class: large
+    working_directory: ~/my-app
+    branches:
+      only:
+        - master
+        - /rc-.*/
+    steps:
+      - run: make test
+      - run: make
+      
